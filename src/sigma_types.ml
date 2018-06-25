@@ -403,7 +403,7 @@ let uncurry_call env sigma c =
   let ctx, concl = decompose_prod_n_assum sigma (List.length args) ty in
   let evdref = ref sigma in
   (* let ctx = (Anonymous, None, concl) :: ctx in *)
-  let sigty, sigctx, constr = telescope evdref InType ctx  in
+  let sigty, sigctx, constr = telescope evdref Sorts.InType ctx  in
   let app = Vars.substl (List.rev args) constr in
   !evdref, app, sigty
 
@@ -619,7 +619,7 @@ let smart_case (env : Environ.env) (evd : Evd.evar_map ref)
         ) (succ nb_cuts, [], [], []) arity_ctx' rev_indices' omitted
       in
       let sigctx = List.rev rev_sigctx in
-      let sigty, _, sigconstr = telescope evd InType sigctx in
+      let sigty, _, sigconstr = telescope evd Sorts.InType sigctx in
 
       (* Build a goal with an equality of telescopes at the front. *)
       let left_sig = Vars.substl (List.rev tele_lhs) sigconstr in
