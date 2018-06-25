@@ -221,9 +221,20 @@ let solve_problems env sigma rho pbs =
       let pbs = ProblemSet.remove pb pbs in
       let (l, r) = specialize_pb sigma rho' pb in
 	match l, r with
-	| _, PRel i -> 
-	  let rho'' = single_subst env sigma i l (pi1 rho') in
-	    aux (compose_subst env ~sigma rho'' rho') pbs postponed
+        | _, PRel i ->
+           let rho' =
+             let open Context.Rel.Declaration in
+             match l with
+             | PRel j -> (* Variable-variable substitution, use i's name *)
+                let decl = List.nth (pi1 rho') i in
+                let decl' = List.nth (pi1 rho') j in
+                let decl' = set_name (get_name decl) decl' in
+                let ctx' = CList.assign (pi1 rho') j decl' in
+                (ctx', pi2 rho', pi3 rho')
+             | _ -> rho'
+           in
+           let rho'' = single_subst env sigma i l (pi1 rho') in
+           aux (compose_subst env ~sigma rho'' rho') pbs postponed
 	| PInac t, u ->
 	  let uc = pat_constr u in
 	    if is_conv env sigma t uc then aux rho' pbs postponed
