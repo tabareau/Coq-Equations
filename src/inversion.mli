@@ -10,7 +10,7 @@ open EConstr
 open Covering
 
 type matching_problem
-type clause = rel_context * matching_problem
+type clause = rel_context * (Names.constructor * EConstr.t) * matching_problem
 type problems = rel_context * clause list
 
 val make_inversion_pb :
@@ -19,6 +19,7 @@ val make_inversion_pb :
 
 val is_prel_pat : int -> pat -> bool
 
-val simplify_problems : Environ.env -> Evd.evar_map -> (context_map * matching_problem) list -> (context_map * matching_problem) list
-val solve_problem : Environ.env -> Evd.evar_map -> constr -> Sorts.family -> problems -> Evd.evar_map * splitting
-
+val simplify_problems : Environ.env -> Evd.evar_map -> (context_map * Names.constructor * matching_problem) list ->
+                        (context_map * Names.constructor * matching_problem) list
+val solve_problem : Environ.env -> Evd.evar_map -> constr -> Sorts.family -> problems ->
+                    Evd.evar_map * splitting *            (Names.constructor * EConstr.t) list
