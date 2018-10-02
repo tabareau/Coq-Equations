@@ -655,26 +655,46 @@ Definition ind_pack_eq {A : Type} {B : A -> Type} {x : A} {p q : B x} (e : p = q
   @eq (sigma A (fun x => B x)) &(x & p) &(x & q).
 Proof. destruct e. reflexivity. Defined.
 
-Polymorphic
-Definition ind_pack_eq_inv {A : Type} {eqdec : EqDec A}
-           {B : A -> Type} (x : A) (p q : B x) (e : @eq (sigma A (fun x => B x)) &(x & p) &(x & q)) : p = q.
-Proof. revert e. apply simplification_sigma2_dec. apply id. Defined.
-
-Polymorphic
-Definition ind_pack_eq_inv_refl  {A : Type} {eqdec : EqDec A}
-           {B : A -> Type} {x : A} (p : B x) :
-  ind_pack_eq_inv _ _ _ (@eq_refl _ &(x & p)) = eq_refl.
+Polymorphic Definition sigma_eq_1 {A} {B : A -> Type} {x y : A} {p : B x} {q : B y} :
+  @eq (sigma A (fun x => B x)) &(x & p) &(y & q) -> x = y.
 Proof.
-  unfold ind_pack_eq_inv. simpl. unfold simplification_sigma2_dec.
-  unfold id. apply inj_right_sigma_refl.
+  change y with (sigmaI (fun x => B x) y q).1 at 2.
+  generalize (sigmaI (fun x => B x) y q).
+  intros s H. destruct H. reflexivity.
+Defined.
+
+Polymorphic Definition sigma_eq_2 {A} {B : A -> Type} {x y : A} {p : B x} {q : B y} :
+  forall e : @eq (sigma A (fun x => B x)) &(x & p) &(y & q),
+    (@eq_rect A x B p y (sigma_eq_1 e)) = q.
+Proof.
+  intros.
+  change y with (sigmaI (fun x => B x) y q).1 at 1 2 3.
+  change q with (sigmaI (fun x => B x) y q).2 at 4 5.
+  revert e.
+  generalize (sigmaI (fun x => B x) y q).
+  intros s H. destruct H. reflexivity.
 Defined.
 
 Polymorphic
-Definition ind_pack_eq_inv_equiv {A : Type} {eqdec : EqDec A}
-           {B : A -> Type} {x : A} (p q : B x) (e : p = q) :
-  ind_pack_eq_inv _ _ _ (ind_pack_eq e) = e.
+Definition ind_pack_eq_inv {A : Type}
+  {B : A -> Type} (x : A) (p q : B x) (e : @eq (sigma A (fun x => B x)) &(x & p) &(x & q))
+  (e' : sigma_eq_1 e = eq_refl) : p = q.
 Proof.
-  destruct e. apply ind_pack_eq_inv_refl. 
+  rewrite <- (sigma_eq_2 e). rewrite e'. reflexivity.
+Defined.
+
+Polymorphic
+Definition ind_pack_eq_inv_refl  {A : Type}
+           {B : A -> Type} {x : A} (p : B x) :
+  ind_pack_eq_inv _ _ _ (@eq_refl _ &(x & p)) eq_refl = eq_refl.
+Proof. reflexivity. Defined.
+
+Polymorphic
+Definition ind_pack_eq_inv_equiv {A : Type} {eqdec : EqDec A}
+           {B : A -> Type} {x : A} (p q : B x) (e : p = q) prf :
+  ind_pack_eq_inv _ _ _ (ind_pack_eq e) prf = e.
+Proof.
+  destruct e. simpl in *.
 Defined.
 
 Polymorphic

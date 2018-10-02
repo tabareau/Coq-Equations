@@ -823,6 +823,13 @@ let infer_step ?(loc:Loc.t option) ~(isSol:bool)
     end
   end
 
+let or_fun (f : simplification_fun) (g : simplification_fun) : simplification_fun =
+  fun (env : Environ.env) (evd : Evd.evar_map ref) (gl : goal) ->
+  let evd0 = !evd in
+  try f env evd gl
+  with CannotSimplify _ ->
+    evd := evd0; g env evd gl
+
 let expand_many rule env evd ((ctx, ty) : goal) : simplification_rules =
   (* FIXME: maybe it's too brutal/expensive? *)
   let ty = Reductionops.whd_all env !evd ty in
@@ -868,18 +875,29 @@ and simplify_one ((loc, rule) : Loc.t option * simplification_rule) :
       let step = get_step env evd gl in
         execute_step step env evd gl
     in
-(*    let f = safe_fun f in*)
     let f = compose_fun f remove_sigma in
-    let f = with_retry f in
-      handle_error f
+    with_retry f
+  in
+  let wrap_handle get_step =
+    let f = wrap get_step in
+    handle_error f
   in
   match rule with
-  | Infer_many -> fun env evd gl ->
-      let rules = handle_error (expand_many (loc, Infer_one)) env evd gl in
-        simplify rules env evd gl
-  | Step step -> wrap (fun _ _ _ -> step)
-  | Infer_one -> wrap (infer_step ?loc ~isSol:false)
-  | Infer_direction -> wrap (infer_step ?loc ~isSol:true)
+  | Infer_many ->
+     let rec aux env evd gl =
+       let first =
+         or_fun apply_noconf
+         (wrap (infer_step ?loc ~isSol:false))
+       in
+       try compose_fun aux first env evd gl
+       with CannotSimplify _ -> identity env evd gl
+     in aux
+     (* fun env evd gl ->
+      * let rules = handle_error (expand_many (loc, Infer_one)) env evd gl in
+      * simplify rules env evd gl *)
+  | Step step -> wrap_handle (fun _ _ _ -> step)
+  | Infer_one -> wrap_handle (infer_step ?loc ~isSol:false)
+  | Infer_direction -> wrap_handle (infer_step ?loc ~isSol:true)
 
 and simplify (rules : simplification_rules) : simplification_fun =
   let funs = List.rev_map simplify_one rules in
