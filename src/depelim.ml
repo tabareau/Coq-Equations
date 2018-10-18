@@ -426,9 +426,9 @@ let specialize_eqs id gl =
   let ty = pf_get_hyp_typ gl id in
   let evars = ref (project gl) in
   let unif env ctx evars c1 c2 =
-    match Evarconv.conv env !evars (it_mkLambda_or_subst c1 ctx) (it_mkLambda_or_subst c2 ctx) with
-    | None -> false
-    | Some evm -> evars := evm; true
+    match Evarconv.unify_delay env !evars (it_mkLambda_or_subst c1 ctx) (it_mkLambda_or_subst c2 ctx) with
+    | exception Evarconv.UnableToUnify _ -> false
+    | evm -> evars := evm; true
   in
   let rec aux in_eqs ctx acc ty =
     match kind !evars ty with
