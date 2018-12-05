@@ -285,7 +285,7 @@ val depind_tac : Names.Id.t -> unit Proofview.tactic
 val rec_tac :            Tacexpr.r_trm ->
                          Names.Id.t ->
                          Tacexpr.r_dispatch Tacexpr.gen_tactic_expr
-val rec_wf_tac :            Tacexpr.r_trm ->
+val rec_wf_tac :            Tacexpr.r_trm -> Tacexpr.r_trm ->
            Names.Id.t -> Tacexpr.r_trm ->
                          Tacexpr.r_dispatch Tacexpr.gen_tactic_expr
 (** Unfold the first occurrence of a Constant.t declared unfoldable in db
